@@ -1,7 +1,4 @@
-﻿// Learn more about F# at http://fsharp.net
-// See the 'F# Tutorial' project for more help.
- 
-type Gate =   Not of int 
+﻿type Gate =   Not of int 
             | CNot of int*int
             | Toffoli of int*int*int 
 
@@ -34,10 +31,11 @@ let hDistance (a : bool array) (b : bool array) =
 
 //Algorithm L from page 358 of TAOCP vol 4A (1st Edition)
 let comb t n = 
-    let mutable c = Array.init (t+2) (fun index ->  if index < t then index 
-                                                    else if index = t then n
-                                                        else 0 
-                                     )
+    let arrayIntializer index = 
+        if   index < t then index 
+        elif index = t then n
+        else 0
+    let mutable c = Array.init (t+2) arrayIntializer
     let mutable res = []
     let mutable j = 1
     while t >= j do
@@ -47,8 +45,34 @@ let comb t n =
             c.[j-1] <- j - 1
             j <- j + 1
         c.[j-1] <- c.[j-1] + 1
-    res      
+    res    
+    
+let combList t n = 
+    let arrayIntializer index = 
+        if   index < t then index 
+        elif index = t then n
+        else 0
+    let mutable init = Array.init (t+2) arrayIntializer
+    let nextComb (x : int array) =
+        let mutable c = x
+        let mutable j = 1
+        while c.[j-1] + 1 = c.[j] do
+            c.[j-1] <- j - 1
+            j <- j + 1  
+        c.[j-1] <- c.[j-1] + 1
+        (c,j) 
+    let combs =
+        Seq.unfold
+            ( fun (x : int array * int) -> 
+                match x with
+                | (c,j) when t >= j -> Some (c.[0..t-1], nextComb c)
+                | _ -> None
+            ) 
+            (init,0) 
+    combs 
 
+
+let printSeq seq1 = Seq.iter (printf "%A ") seq1; printfn ""
 
 [<EntryPoint>]
 let main argv = 
@@ -61,4 +85,5 @@ let main argv =
     printf "%A\n" (comb 2 4) 
     printf "%A\n" test
     printf "%d\n" (hDistance test.[0] test.[1])
+    printSeq (combList 2 5)
     0 // return an integer exit code
